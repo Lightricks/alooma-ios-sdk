@@ -2,6 +2,8 @@
 
 #import <UIKit/UIKit.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @protocol AloomaDelegate;
 
 /*!
@@ -56,7 +58,7 @@
  @abstract
  Current user's name in Mixpanel Streams.
  */
-@property (atomic, copy) NSString *nameTag;
+@property (atomic, copy, nullable) NSString *nameTag;
 
 /*!
  @property
@@ -145,8 +147,10 @@
 
  @param apiToken        your project token
  @param url             your server url
+ @param application     current application
  */
-+ (Alooma *)sharedInstanceWithToken:(NSString *)apiToken serverURL:(NSString*)url;
++ (Alooma *)sharedInstanceWithToken:(NSString *)apiToken serverURL:(NSString*)url
+                        application:(nullable UIApplication *)application;
 
 /*!
  @method
@@ -165,7 +169,9 @@
  @param url             your server url
 
  */
-+ (Alooma *)sharedInstanceWithToken:(NSString *)apiToken serverURL:(NSString*)url launchOptions:(NSDictionary *)launchOptions;
++ (Alooma *)sharedInstanceWithToken:(NSString *)apiToken serverURL:(NSString*)url
+                      launchOptions:(nullable NSDictionary *)launchOptions
+                        application:(nullable UIApplication *)application;
 
 /*!
  @method
@@ -195,8 +201,12 @@
  @param launchOptions   optional app delegate launchOptions
  @param flushInterval   interval to run background flushing
  @param url             your server url
+ @param application     current application
  */
-- (instancetype)initWithToken:(NSString *)apiToken serverURL:(NSString*)url launchOptions:(NSDictionary *)launchOptions andFlushInterval:(NSUInteger)flushInterval;
+- (instancetype)initWithToken:(NSString *)apiToken serverURL:(NSString*)url
+                launchOptions:(nullable NSDictionary *)launchOptions
+             andFlushInterval:(NSUInteger)flushInterval
+                  application:(nullable UIApplication *)application;
 
 /*!
  @method
@@ -211,8 +221,11 @@
  @param apiToken        your project token
  @param flushInterval   interval to run background flushing
  @param url             your server url
+ @param application     current application
  */
-- (instancetype)initWithToken:(NSString *)apiToken serverURL:(NSString*)url andFlushInterval:(NSUInteger)flushInterval;
+- (instancetype)initWithToken:(NSString *)apiToken serverURL:(NSString*)url
+             andFlushInterval:(NSUInteger)flushInterval
+                  application:(nullable UIApplication *)application;
 
 /*!
  @property
@@ -276,7 +289,7 @@
  <code>NSURL</code> objects. If the event is being timed, the timer will
  stop and be added as a property.
  
- @param properties           arguments dictionary
+ @param customEvent           arguments dictionary
  
  */
 - (void)trackCustomEvent:(NSDictionary *)customEvent;
@@ -296,7 +309,7 @@
  stop and be added as a property.
 
  @param event           event name
- @param properties      properties dictionary
+ @param customEvent      properties dictionary
  */
 - (void)track:(NSString *)event customEvent:(NSDictionary *)customEvent;
 
@@ -317,7 +330,7 @@
  @param event           event name
  @param properties      properties dictionary
  */
-- (void)track:(NSString *)event properties:(NSDictionary *)properties;
+- (void)track:(NSString *)event properties:(nullable NSDictionary *)properties;
 
 /*!
  @method
@@ -387,7 +400,8 @@
  @param properties      properties dictionary
  @param defaultValue    overwrite existing properties that have this value
  */
-- (void)registerSuperPropertiesOnce:(NSDictionary *)properties defaultValue:(id)defaultValue;
+- (void)registerSuperPropertiesOnce:(NSDictionary *)properties
+                       defaultValue:(nullable id)defaultValue;
 
 /*!
  @method
@@ -537,3 +551,5 @@
 - (BOOL)aloomaWillFlush:(Alooma *)mixpanel;
 
 @end
+
+NS_ASSUME_NONNULL_END
