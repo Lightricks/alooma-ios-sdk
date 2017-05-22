@@ -366,9 +366,10 @@ static __unused NSString *MPURLEncode(NSString *s)
             [self archiveEvents];
         }
     });
-#if defined(ALOOMA_APP_EXTENSION)
+
+  if (!self.application) {
     [self flush];
-#endif
+  }
 }
 
 
