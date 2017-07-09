@@ -41,7 +41,7 @@ static NSString * const kSendingTimeKey = @"sending_time";
 @property (nonatomic, strong) NSMutableArray *eventsQueue;
 @property (nonatomic, assign) UIBackgroundTaskIdentifier taskId;
 @property (nonatomic, strong) dispatch_queue_t serialQueue;
-@property (nonatomic, assign) SCNetworkReachabilityRef reachability;
+@property (nonatomic, assign, nullable) SCNetworkReachabilityRef reachability;
 @property (nonatomic, strong) CTTelephonyNetworkInfo *telephonyInfo;
 @property (nonatomic, strong) NSDateFormatter *dateFormatter;
 @property (nonatomic, strong) NSMutableDictionary *timedEvents;
@@ -236,7 +236,7 @@ static __unused NSString *MPURLEncode(NSString *s)
 
 #pragma mark - Tracking
 
-+ (void)assertPropertyTypes:(NSDictionary *)properties
++ (void)assertPropertyTypes:(nullable NSDictionary *)properties
 {
     for (id __unused k in properties) {
         NSAssert([k isKindOfClass: [NSString class]], @"%@ property keys must be NSString. got: %@ %@", self, [k class], k);
@@ -722,7 +722,7 @@ static __unused NSString *MPURLEncode(NSString *s)
     return results;
 }
 
-- (NSString *)watchModel
+- (nullable NSString *)watchModel
 {
     NSString *model = nil;
     Class WKInterfaceDeviceClass = NSClassFromString(@"WKInterfaceDevice");
@@ -748,7 +748,7 @@ static __unused NSString *MPURLEncode(NSString *s)
     return model;
 }
 
-- (NSString *)IFA
+- (nullable NSString *)IFA
 {
     NSString *ifa = nil;
 #if !defined(MIXPANEL_NO_IFA)
