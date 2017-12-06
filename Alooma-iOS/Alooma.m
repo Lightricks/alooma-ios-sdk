@@ -827,9 +827,11 @@ static __unused NSString *MPURLEncode(NSString *s)
 - (void)updateNetworkActivityIndicator:(BOOL)on
 {
 #if !defined(ALOOMA_APP_EXTENSION)
-    if (_showNetworkActivityIndicator) {
-        _application.networkActivityIndicatorVisible = on;
-    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (_showNetworkActivityIndicator) {
+            _application.networkActivityIndicatorVisible = on;
+        }
+    });
 #endif
 }
 
