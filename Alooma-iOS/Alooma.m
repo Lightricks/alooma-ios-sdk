@@ -106,14 +106,15 @@ static Alooma *sharedInstance = nil;
         self.timedEvents = [NSMutableDictionary dictionary];
 
 
-#if !defined(ALOOMA_APP_EXTENSION)
+        if (![Alooma isAppExtension]) {
 //        application = [UIApplication sharedApplication];
         if ([[UIApplication class] respondsToSelector:@selector(sharedApplication)]) {
             _application = [[UIApplication class] performSelector:@selector(sharedApplication)];
         }
-        [self setUpListeners];
-        
-#endif
+        if(_application)
+            [self setUpListeners];
+        }
+
         [self unarchive];
 
         if (launchOptions && launchOptions[UIApplicationLaunchOptionsRemoteNotificationKey]) {
@@ -357,9 +358,9 @@ static __unused NSString *MPURLEncode(NSString *s)
             [self archiveEvents];
         }
     });
-#if defined(ALOOMA_APP_EXTENSION)
+if ([Alooma isAppExtension]) {
     [self flush];
-#endif
+}
 }
 
 
@@ -811,28 +812,21 @@ static __unused NSString *MPURLEncode(NSString *s)
 
 - (BOOL)inBackground
 {
-#if !defined(ALOOMA_APP_EXTENSION)
-    _inBG = false;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (_application.applicationState == UIApplicationStateBackground) {
-            _inBG = true;
-        }
-    });
+if (![Alooma isAppExtension]) {
     return _inBG;
-#else
+}
     return NO;
-#endif
 }
 
 - (void)updateNetworkActivityIndicator:(BOOL)on
 {
-#if !defined(ALOOMA_APP_EXTENSION)
+if (![Alooma isAppExtension]) {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (_showNetworkActivityIndicator) {
             _application.networkActivityIndicatorVisible = on;
         }
     });
-#endif
+}
 }
 
 #if !defined(ALOOMA_APP_EXTENSION)
@@ -927,6 +921,7 @@ static void AloomaReachabilityCallback(SCNetworkReachabilityRef target, SCNetwor
 
 - (void)applicationDidBecomeActive:(NSNotification *)notification
 {
+    _inBG = false;
     AloomaDebug(@"%@ application did become active", self);
     [self startFlushTimer];
 }
@@ -939,8 +934,8 @@ static void AloomaReachabilityCallback(SCNetworkReachabilityRef target, SCNetwor
 
 - (void)applicationDidEnterBackground:(NSNotification *)notification
 {
+    _inBG = true;
     AloomaDebug(@"%@ did enter background", self);
-
     self.taskId = [_application beginBackgroundTaskWithExpirationHandler:^{
         AloomaDebug(@"%@ flush %lu cut short", self, (unsigned long)self.taskId);
         [_application endBackgroundTask:self.taskId];
@@ -996,15 +991,6 @@ static void AloomaReachabilityCallback(SCNetworkReachabilityRef target, SCNetwor
 }
 
 #pragma mark - Decide
-
-- (UIViewController *)topPresentedViewController
-{
-    UIViewController *controller = _application.keyWindow.rootViewController;
-    while (controller.presentedViewController) {
-        controller = controller.presentedViewController;
-    }
-    return controller;
-}
 
 #endif
 
