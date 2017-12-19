@@ -107,12 +107,12 @@ static Alooma *sharedInstance = nil;
 
 
         if (![Alooma isAppExtension]) {
-//        application = [UIApplication sharedApplication];
-        if ([[UIApplication class] respondsToSelector:@selector(sharedApplication)]) {
-            _application = [[UIApplication class] performSelector:@selector(sharedApplication)];
-        }
-        if(_application)
-            [self setUpListeners];
+            if ([[UIApplication class] respondsToSelector:@selector(sharedApplication)]) {
+                _application = [[UIApplication class] performSelector:@selector(sharedApplication)];
+            }
+            if(_application) {
+                [self setUpListeners];
+            }
         }
 
         [self unarchive];
@@ -358,9 +358,10 @@ static __unused NSString *MPURLEncode(NSString *s)
             [self archiveEvents];
         }
     });
-if ([Alooma isAppExtension]) {
-    [self flush];
-}
+    
+    if ([Alooma isAppExtension]) {
+        [self flush];
+    }
 }
 
 
@@ -812,9 +813,9 @@ if ([Alooma isAppExtension]) {
 
 - (BOOL)inBackground
 {
-if (![Alooma isAppExtension]) {
-    return _inBG;
-}
+    if (![Alooma isAppExtension]) {
+        return _inBG;
+    }
     return NO;
 }
 
@@ -989,8 +990,6 @@ static void AloomaReachabilityCallback(SCNetworkReachabilityRef target, SCNetwor
         [self track:eventMap[userInfo[@"event_name"]] properties:userInfo[@"event_args"]];
     }
 }
-
-#pragma mark - Decide
 
 #endif
 
