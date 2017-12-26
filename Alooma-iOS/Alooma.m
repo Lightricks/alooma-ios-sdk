@@ -110,9 +110,11 @@ static Alooma *sharedInstance = nil;
             if ([[UIApplication class] respondsToSelector:@selector(sharedApplication)]) {
                 _application = [[UIApplication class] performSelector:@selector(sharedApplication)];
             }
+#if !defined(ALOOMA_APP_EXTENSION)
             if(_application) {
                 [self setUpListeners];
             }
+#endif
         }
 
         [self unarchive];
@@ -821,13 +823,13 @@ static __unused NSString *MPURLEncode(NSString *s)
 
 - (void)updateNetworkActivityIndicator:(BOOL)on
 {
-if (![Alooma isAppExtension]) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (_showNetworkActivityIndicator) {
-            _application.networkActivityIndicatorVisible = on;
-        }
-    });
-}
+    if (![Alooma isAppExtension]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (_showNetworkActivityIndicator) {
+                _application.networkActivityIndicatorVisible = on;
+            }
+        });
+    }
 }
 
 #if !defined(ALOOMA_APP_EXTENSION)
