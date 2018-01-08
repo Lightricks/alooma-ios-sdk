@@ -95,7 +95,7 @@ static Alooma *sharedInstance = nil;
         self.serverURL = url;
 
         self.distinctId = [self defaultDistinctId];
-        self.sessionId = [self defaultDistinctId];
+        self.sessionId = [[NSUUID UUID] UUIDString];
         self.superProperties = [NSMutableDictionary dictionary];
         self.telephonyInfo = [[CTTelephonyNetworkInfo alloc] init];
         self.automaticProperties = [self collectAutomaticProperties];
