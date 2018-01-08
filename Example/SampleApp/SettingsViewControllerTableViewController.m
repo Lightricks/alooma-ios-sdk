@@ -13,6 +13,8 @@
     
     __weak IBOutlet UISwitch *stringSwitch;
     __weak IBOutlet UITextField *stringTextField;
+    __weak IBOutlet UITextField *stringTokenText;
+    __weak IBOutlet UITextField *stringServerText;
     
     __weak IBOutlet UISegmentedControl *objectTypeSegment;
     
@@ -44,8 +46,13 @@
     eventsCount = 0;
     
     [stringTextField setDelegate:self];
+    [stringTokenText setDelegate:self];
+    [stringServerText setDelegate:self];
     
-    alooma = [self createAlooma];
+    NSString* token = @"ValidToken";
+    NSString* server = @"https://queen-i.alooma.io";
+    
+    alooma = [self createAloomaWithToken:token serverURL:server];
 }
 
 - (Alooma*)createAlooma{
@@ -54,6 +61,11 @@
     
     return [[Alooma alloc] initWithToken:tokens[tokenSegment.selectedSegmentIndex]
                                serverURL:serverURLs[serverSegment.selectedSegmentIndex] andFlushInterval:60];
+}
+
+- (Alooma*)createAloomaWithToken:(NSString*)token serverURL:(NSString*)server {
+    return [[Alooma alloc] initWithToken:token
+                               serverURL:server andFlushInterval:60];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -150,6 +162,9 @@
 - (IBAction)serverSelectValueChanged:(id)sender {
     alooma = [self createAlooma];
     [self.delegate statusChanged:@"Alooma re-initialized"];
+}
+- (IBAction)initializeAloomaSDKButtonPressed:(id)sender {
+    alooma = [self createAloomaWithToken:stringTokenText.text serverURL:stringServerText.text];
 }
 
 - (IBAction)registerSuperPropertiesButtonPressed:(id)sender {

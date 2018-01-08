@@ -49,7 +49,20 @@
  use the <code>identify:</code> method.
  */
 @property (atomic, readonly, copy) NSString *distinctId;
-
+/*!
+ @property
+ 
+ @abstract
+ Unique ID for every session
+ */
+@property (atomic, readonly, copy) NSString *sessionId;
+/*!
+ @property
+ 
+ @abstract
+ Running counter for tracked messages
+ */
+@property (atomic, readonly, copy) NSNumber* messageIndex;
 /*!
  @property
 

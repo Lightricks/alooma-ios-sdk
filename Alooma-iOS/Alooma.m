@@ -31,6 +31,8 @@ static NSString * const kSendingTimeKey = @"sending_time";
 
 // re-declare internally as readwrite
 @property (atomic, copy) NSString *distinctId;
+@property (atomic, copy) NSString *sessionId;
+@property (atomic, copy) NSNumber* messageIndex;
 
 @property (nonatomic, copy) NSString *apiToken;
 @property (atomic, strong) NSDictionary *superProperties;
@@ -84,6 +86,7 @@ static Alooma *sharedInstance = nil;
         AloomaDebug(@"%@ warning empty api token", self);
     }
     if (self = [self init]) {
+        self.messageIndex = 0;
         self.apiToken = apiToken;
         _flushInterval = flushInterval;
         self.flushOnBackground = YES;
@@ -92,6 +95,7 @@ static Alooma *sharedInstance = nil;
         self.serverURL = url;
 
         self.distinctId = [self defaultDistinctId];
+        self.sessionId = [self defaultDistinctId];
         self.superProperties = [NSMutableDictionary dictionary];
         self.telephonyInfo = [[CTTelephonyNetworkInfo alloc] init];
         self.automaticProperties = [self collectAutomaticProperties];
@@ -335,6 +339,11 @@ static __unused NSString *MPURLEncode(NSString *s)
         if (self.distinctId) {
             p[@"distinct_id"] = self.distinctId;
         }
+        if (self.sessionId) {
+            p[@"session_id"] = self.sessionId;
+        }
+        self.messageIndex = [NSNumber numberWithInt:[self.messageIndex intValue] + 1];
+        p[@"message_index"] = self.messageIndex;
         p[kSendingTimeKey] = kSendingTimePlaceHolder;
         [p addEntriesFromDictionary:self.superProperties];
         if (properties) {
