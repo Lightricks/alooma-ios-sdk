@@ -7,8 +7,6 @@
 #import "SettingsViewControllerTableViewController.h"
 
 @interface SettingsViewControllerTableViewController () <UITextFieldDelegate>{
-    __weak IBOutlet UISegmentedControl *tokenSegment;
-    __weak IBOutlet UISegmentedControl *serverSegment;
     __weak IBOutlet UISegmentedControl *eventTypeSegment;
     
     __weak IBOutlet UISwitch *stringSwitch;
@@ -49,18 +47,6 @@
     [stringTokenText setDelegate:self];
     [stringServerText setDelegate:self];
     
-    NSString* token = @"ValidToken";
-    NSString* server = @"https://queen-i.alooma.io";
-    
-    alooma = [self createAloomaWithToken:token serverURL:server];
-}
-
-- (Alooma*)createAlooma{
-    NSArray *tokens = @[@"ValidToken", @"InvalidToken"];
-    NSArray *serverURLs = @[@"https://queen-i.alooma.io", @"http://www.BadServerAddressThatsnotgonnaworkzzzzzz.com"];
-    
-    return [[Alooma alloc] initWithToken:tokens[tokenSegment.selectedSegmentIndex]
-                               serverURL:serverURLs[serverSegment.selectedSegmentIndex] andFlushInterval:60];
 }
 
 - (Alooma*)createAloomaWithToken:(NSString*)token serverURL:(NSString*)server {
@@ -154,17 +140,9 @@
     [stringTextField setEnabled:((UISwitch*)sender).isOn];
 }
 
-- (IBAction)tokenSelectValueChanged:(id)sender {
-    alooma = [self createAlooma];
-    [self.delegate statusChanged:@"Alooma re-initialized"];
-}
-
-- (IBAction)serverSelectValueChanged:(id)sender {
-    alooma = [self createAlooma];
-    [self.delegate statusChanged:@"Alooma re-initialized"];
-}
 - (IBAction)initializeAloomaSDKButtonPressed:(id)sender {
     alooma = [self createAloomaWithToken:stringTokenText.text serverURL:stringServerText.text];
+    [self.delegate statusChanged:[NSString stringWithFormat:@"Alooma re-initialized"]];
 }
 
 - (IBAction)registerSuperPropertiesButtonPressed:(id)sender {
