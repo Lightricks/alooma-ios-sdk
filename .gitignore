@@ -29,3 +29,4 @@ Example/build
 
 .venv
 *.pyc
+Example/TestServer/example_app_test_db.db
