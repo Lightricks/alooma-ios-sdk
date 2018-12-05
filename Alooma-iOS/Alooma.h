@@ -282,15 +282,14 @@
  @method
  
  @abstract
- Arguments will allow you to segment your events in your Mixpanel reports.
+ Tracks a custom NSDictionary object as an event.
  Argument keys must be <code>NSString</code> objects and values must be
  <code>NSString</code>, <code>NSNumber</code>, <code>NSNull</code>,
  <code>NSArray</code>, <code>NSDictionary</code>, <code>NSDate</code> or
  <code>NSURL</code> objects. If the event is being timed, the timer will
  stop and be added as a property.
  
- @param properties           arguments dictionary
- 
+ @param customEvent     dictionary to be used as whole event. properties will be injected
  */
 - (void)trackCustomEvent:(NSDictionary *)customEvent;
 
@@ -298,7 +297,7 @@
  @method
 
  @abstract
- Tracks an event with properties.
+ Tracks an event with a custom structure.
 
  @discussion
  Arguments will allow you to segment your events in your Mixpanel reports.
@@ -309,7 +308,7 @@
  stop and be added as a property.
 
  @param event           event name
- @param properties      properties dictionary
+ @param customEvent     dictionary to be used as whole event. properties will be injected
  */
 - (void)track:(NSString *)event customEvent:(NSDictionary *)customEvent;
 
