@@ -1,5 +1,6 @@
 source 'https://github.com/CocoaPods/Specs.git'
 
 target 'SampleApp' do
+  platform :ios, '8.0'
   pod "Alooma-iOS", :path => '../'
 end
