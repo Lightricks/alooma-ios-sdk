@@ -18,7 +18,7 @@
 #import "AloomaLogger.h"
 #import "NSData+AloomaBase64.h"
 
-#define VERSION @"0.1.1"
+#define VERSION @"0.1.4"
 
 static NSString * const kSendingTimePlaceHolder = @"<SendingTimePlaceHolder>";
 static NSString * const kSendingTimeKey = @"sending_time";
@@ -834,8 +834,8 @@ static __unused NSString *MPURLEncode(NSString *s)
 {
     if (![Alooma isAppExtension]) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (_showNetworkActivityIndicator) {
-                _application.networkActivityIndicatorVisible = on;
+            if (self.showNetworkActivityIndicator) {
+                self.application.networkActivityIndicatorVisible = on;
             }
         });
     }
@@ -948,9 +948,9 @@ static void AloomaReachabilityCallback(SCNetworkReachabilityRef target, SCNetwor
 {
     _inBG = true;
     AloomaDebug(@"%@ did enter background", self);
-    self.taskId = [_application beginBackgroundTaskWithExpirationHandler:^{
+    self.taskId = [self.application beginBackgroundTaskWithExpirationHandler:^{
         AloomaDebug(@"%@ flush %lu cut short", self, (unsigned long)self.taskId);
-        [_application endBackgroundTask:self.taskId];
+        [self.application endBackgroundTask:self.taskId];
         self.taskId = UIBackgroundTaskInvalid;
     }];
     AloomaDebug(@"%@ starting background cleanup task %lu", self, (unsigned long)self.taskId);
@@ -963,7 +963,7 @@ static void AloomaReachabilityCallback(SCNetworkReachabilityRef target, SCNetwor
         [self archive];
         AloomaDebug(@"%@ ending background cleanup task %lu", self, (unsigned long)self.taskId);
         if (self.taskId != UIBackgroundTaskInvalid) {
-            [_application endBackgroundTask:self.taskId];
+            [self.application endBackgroundTask:self.taskId];
             self.taskId = UIBackgroundTaskInvalid;
         }
 //        self.decideResponseCached = NO;
@@ -975,7 +975,7 @@ static void AloomaReachabilityCallback(SCNetworkReachabilityRef target, SCNetwor
     AloomaDebug(@"%@ will enter foreground", self);
     dispatch_async(self.serialQueue, ^{
         if (self.taskId != UIBackgroundTaskInvalid) {
-            [_application endBackgroundTask:self.taskId];
+            [self.application endBackgroundTask:self.taskId];
             self.taskId = UIBackgroundTaskInvalid;
             [self updateNetworkActivityIndicator:NO];
         }
