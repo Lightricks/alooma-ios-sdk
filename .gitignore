@@ -26,3 +26,5 @@ profile
 Example/Pods
 Podfile.lock
 Example/build
+
+.venv
