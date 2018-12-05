@@ -138,6 +138,11 @@
 
 - (IBAction)stringSwitchValueChanged:(id)sender {
     [stringTextField setEnabled:((UISwitch*)sender).isOn];
+    if (((UISwitch*)sender).isOn) {
+        stringTextField.placeholder = @"Empty String";
+    } else {
+        stringTextField.placeholder = @"nil";
+    }
 }
 
 - (IBAction)initializeAloomaSDKButtonPressed:(id)sender {
