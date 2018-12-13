@@ -1,21 +1,17 @@
 language: objective-c
-
 addons:
   sauce_connect: true
-    # username: "Your Sauce Labs username" --> SAUCE_USERNAME
-    # access_key: "Your Sauce Labs access key" --> SAUCE_ACCESS_KEY
-
+    username: amar.rami
+  jwt:
+    secure:  tuCcmR/Mne/B0WhU0PMV76rzN3uLzxFYQqjN2fal34oWpMnQX6Zks9NlOLHtQrdbwXOEbre/MBco/GX4l2YIW1xovEOc0Vq+1Q8TImPk33tY+HLghSV8qpZzufrYoH1oNbfbQvhKS2ZqpHnSuWpMG6qXfty0RGm1YA59Jqb+PV6v+QHbZQofNFzqNxCgiBcxwyV/DWkJ7+d7wohLgaHMjU5Fgp0wr+FQD1kThMjkydFUWRSWMerIL0P9DAvD+vQ/faRgLDGgFDsNfbk/cw1mzFRgwF9gm+3vhuc+laSxq58GR/uYlDKl4+/V9JrEAgnjOoyLk80O993lNWbiTWa8IDvw5+JGs9pgh/AyCyCc8j/6TMUgzlgK4S10+kpSdaKc5I78sNDECHmKkR3SL0oLGnTWGQ7SIs7ZLtOcsgHt4uL7fd4VYV4IfRupAdcmRsMgJT43kGOqvtlYR5WsuPW3iPgnPD8Kd50eWft/W9edH0lQIAXKgEANg9Tl1QXW2SjgCyiVK1GAEN9T1T5Pf2PK6pn1ZHgqgL9gQdZ9pJaSQKPRDtQ1dFrnJ2geh6hQBxqHZaTgo5d36HZp6c33IYpXCGFR+iCuTFqC1lVN9fkhsOlePFQx9CNuGLqcVMn+j40qcPN6YS24BkXI5JskgfgO2yoU/EMV8LoN1caa9Abi1vY=
 install:
-  - (gem update cocoapods && cd Example/ ; pod install)
-  - (cd Example/TestServer && pip3 install -r requirements.txt)
-  - brew install node
-  - npm install -g appium  # get appium
-  - npm install wd         # get appium client
+- "(gem update cocoapods && cd Example/ ; pod install)"
+- "(cd Example/TestServer && pip3 install -r requirements.txt)"
 
 before_script:
-  - (cd Example/TestServer && python3 app.py)
-  - appium
+- "(cd Example/TestServer && python3 app.py)"
 
 script:
-  - xcodebuild -workspace Example/SampleApp.xcworkspace -scheme Pods-SampleApp -sdk iphonesimulator ONLY_ACTIVE_ARCH=NO
-  - (cd Example/TestServer && python -m unittest example_app_test)
+- xcodebuild -workspace Example/SampleApp.xcworkspace -scheme SampleApp -sdk
+  iphonesimulator ONLY_ACTIVE_ARCH=NO
+- "(cd Example/TestServer && python3 -m unittest example_app_test)"

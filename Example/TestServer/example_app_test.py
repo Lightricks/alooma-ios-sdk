@@ -1,5 +1,6 @@
 import unittest
 import sys
+import os
 import pdb
 import functools
 import traceback
@@ -16,6 +17,7 @@ import example_app_driver
 
 logger = logging.getLogger(__name__)
 
+LEGACY_IOSSDK = os.environ.get('LEGACY_IOSSDK')
 
 DEFAULT_PROPERTIES = {
     '$app_release', '$app_version', '$lib_version', '$manufacturer', '$model',
@@ -23,6 +25,9 @@ DEFAULT_PROPERTIES = {
     'distinct_id', 'message_index', 'mp_device_model', 'mp_lib', 'sending_time',
     'session_id', 'time', 'token'
 }
+
+if LEGACY_IOSSDK:
+    DEFAULT_PROPERTIES -= {'session_id', 'message_index'}
 
 SUPER_PROPERTIES = {
     'super_prop_str','super_prop_float', 'super_prop_bool', 'super_prop_int',
@@ -46,10 +51,10 @@ def debug_on(*exceptions):
             try:
                 return f(*args, **kwargs)
             except exceptions:
-                pdb.set_trace()
                 info = sys.exc_info()
                 traceback.print_exception(*info)
-                pdb.post_mortem(info[2])
+                if not example_app_driver.USING_SAUCE:
+                    pdb.set_trace()
                 raise
         return wrapper
     return decorator
@@ -60,7 +65,8 @@ def retry_on_driver_failure(fn):
     def wrapper(self, *args, **kwargs):
         try:
             return fn(self, *args, **kwargs)
-        except selenium.common.exceptions.WebDriverException:
+        except selenium.common.exceptions.WebDriverException as e:
+            logger.warning('Retrying due to Webdriver failure: %s' % str(e))
             self.init_app_driver()
             return fn(self, *args, **kwargs)
     return wrapper
@@ -70,27 +76,13 @@ class ExampleAppTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        warnings.simplefilter("ignore", ResourceWarning)
         cls.delete_received_events()
-        cls.init_app_driver()
-
-    @classmethod
-    def init_app_driver(cls):
-        cls.app_driver = example_app_driver.ExampleAppDriver()
-        cls.app_driver.set_server('http://127.0.0.1:8000')
-
-    @classmethod
-    def tearDownClass(cls):
-        try:
-            cls.app_driver.close()
-        except selenium.common.exceptions.InvalidSessionIdException:
-            # Session was already closed
-            pass
 
     @retry_on_driver_failure
     def setUp(self):
         # unittest resets warnings filter on every test run
         warnings.simplefilter("ignore", ResourceWarning)
+        self.init_app_driver()
         self.test_token = 'TEST_TOKEN_%d' % random.randint(100, 999)
         self.app_driver.set_token(self.test_token)
         self.app_driver.initialize_sdk()
@@ -98,6 +90,17 @@ class ExampleAppTest(unittest.TestCase):
         self.app_driver.set_event_type(self.event_type)
         self.app_driver.set_tracking_function(
             example_app_driver.TrackingFunction.TRACK)
+
+    def init_app_driver(self):
+        self.app_driver = example_app_driver.ExampleAppDriver()
+        self.app_driver.set_server('http://127.0.0.1:8000')
+
+    def tearDown(self):
+        try:
+            self.app_driver.close()
+        except selenium.common.exceptions.InvalidSessionIdException:
+            # Session was already closed
+            pass
 
     @debug_on()
     def test_basic_event_sending(self):
@@ -192,6 +195,8 @@ class ExampleAppTest(unittest.TestCase):
 
     @debug_on()
     def test_session_id(self):
+        if LEGACY_IOSSDK:
+            return
         self.app_driver.send_event()
         self.app_driver.initialize_sdk()
         self.app_driver.send_event()
@@ -212,6 +217,8 @@ class ExampleAppTest(unittest.TestCase):
 
     @debug_on()
     def test_message_index(self):
+        if LEGACY_IOSSDK:
+            return
         self.app_driver.send_event()
         self.app_driver.send_event()
         received_events = self.get_received_events(self.test_token, 2)

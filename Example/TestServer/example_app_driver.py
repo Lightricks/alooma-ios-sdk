@@ -1,9 +1,48 @@
+import os
 import enum
 import functools
+import glob
+import sys
 
 from appium import webdriver
 import selenium
 
+try:
+    IOSSDK_EXAMPLE_APP_PATH = glob.glob(
+        os.path.expanduser('~/Library/Developer/Xcode/DerivedData/') +
+        'SampleApp-*/Build/Products/Debug-iphonesimulator/SampleApp.app'
+    ).pop()
+except Exception as e:
+    print('Could not find SampleApp.app: %s' % str(e))
+
+WEBDRIVER_CAPABILITIES = {
+    'platformName': 'iOS',
+    'platformVersion': '12.1',
+    'deviceName': 'iPhone 7',
+    'browserName': '',
+    'appiumVersion': '1.9.1',
+    'automationName': 'XCUITest',
+    'simpleIsVisibleCheck': False,
+    'app': IOSSDK_EXAMPLE_APP_PATH
+}
+
+try:
+    SAUCE_USERNAME = os.environ['SAUCE_USERNAME']
+    SAUCE_ACCESS_KEY = os.environ['SAUCE_ACCESS_KEY']
+    USING_SAUCE = True
+    DRIVER_URL = "http://%s:%s@ondemand.saucelabs.com:80/wd/hub" % (
+        SAUCE_USERNAME, SAUCE_ACCESS_KEY)
+    import sauce_connect
+    if not os.environ.get('TRAVIS'):
+        # running locally, setting up sauce connect manually
+        sauce_connect.set_up_tunnel()
+    sauce_connect.upload_app_file(IOSSDK_EXAMPLE_APP_PATH, 'sample_app.zip')
+    WEBDRIVER_CAPABILITIES['platformVersion'] = '12.0'
+    WEBDRIVER_CAPABILITIES['deviceName'] = 'iPhone 7 Simulator'
+    WEBDRIVER_CAPABILITIES['app'] = 'sauce-storage:sample_app.zip'
+except KeyError:
+    USING_SAUCE = False
+    DRIVER_URL = 'http://localhost:4723/wd/hub'
 
 class TrackingFunction(enum.Enum):
     TRACK = 0
@@ -46,19 +85,10 @@ class ExampleAppDriver:
         new_command_timeout controls how long it will take for the driver to
         close the session. when using this manually, you might want to increase
         '''
-        self.capabilities = {
-            'platformName': 'iOS',
-            'platformVersion': '12.1',
-            'deviceName': 'iPhone 7',
-            'automationName': 'XCUITest',
-            'newCommandTimeout': new_command_timeout,
-            'simpleIsVisibleCheck': False,
-            'app': '/Users/ramamar/Library/Developer/Xcode/DerivedData/'
-                   'SampleApp-ekrrevwkrlcyqnenrqdwvbfbfsjc/Build/Products/'
-                   'Debug-iphonesimulator/SampleApp.app'
-        }
+        self.capabilities = WEBDRIVER_CAPABILITIES.copy()
+        self.capabilities['newCommandTimeout'] = new_command_timeout
         self.driver = webdriver.Remote(
-            'http://localhost:4723/wd/hub', self.capabilities)
+            DRIVER_URL, self.capabilities)
         self.token_text_box = None
         self.server_text_box = None
         self.event_type_text_box = None
