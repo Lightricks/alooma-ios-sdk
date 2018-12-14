@@ -8,7 +8,7 @@ install:
 - "(cd Example/TestServer && pip3 install -r requirements.txt)"
 
 before_script:
-- "(cd Example/TestServer && python3 app.py)"
+- cd Example/TestServer && python3 app.py &
 
 script:
 - xcodebuild -workspace Example/SampleApp.xcworkspace -scheme SampleApp -sdk iphonesimulator
