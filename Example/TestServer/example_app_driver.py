@@ -36,6 +36,9 @@ try:
     if not os.environ.get('TRAVIS'):
         # running locally, setting up sauce connect manually
         sauce_connect.set_up_tunnel()
+    else:
+        WEBDRIVER_CAPABILITIES['tunnel-identifier'] = \
+            os.environ['TRAVIS_JOB_NUMBER']
     sauce_connect.upload_app_file(IOSSDK_EXAMPLE_APP_PATH, 'sample_app.zip')
     WEBDRIVER_CAPABILITIES['platformVersion'] = '12.0'
     WEBDRIVER_CAPABILITIES['deviceName'] = 'iPhone 7 Simulator'
