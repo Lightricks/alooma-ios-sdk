@@ -15,6 +15,9 @@ script:
   ONLY_ACTIVE_ARCH=NO
 - "(cd Example/TestServer && python3 -m unittest example_app_test)"
 
+after_script:
+- curl -X POST http://127.0.0.1:8000/kill
+
 env:
   global:
     secure: SfYquMUm36PYHtWVFfJ0UbZJu2i0WyBPntmSQBTEpJmeSdVMO7hOJdrJgQA0ipGI7TbTS2RtnGRpHsloWzUD/mGcT75kwm3WruCpPR68uvcDt9+n9dTXxdk7aADCQbaBlx3T93q5eFS/gr/Htdcb5cbtpxXpeYXiWRP6H1veSF1WMkyMiZiYt2o6HZpbZTR/QdOga4E27zBw1Z55OYjGyCRjtDbMBRw+/4OlnvqZIyEypguXbUThif9TjG1YIs2NUU+qs2eKgCrStCUhFgErQ3ZvTP3T2yr6TLCgdZDtJL0tl4CmQ7UnikMeYyHsyj6WwUC+PZUja/fITb6xX2XkFxgBFMMvb19VOvakeqrRW8FUAi7+5LARAlU+hWuoIek5QqZ9ZiQsEeIuUUFTBowGsArOX/JxBGG0xiuYB7fNk60jVHhhDHJfY32wfuXKwk/nniuF6lruuvdkr4TLc/R1MlUih+2DMSMFnV6crRfaIq7FHJ6flDUsziNJVSkTQQZuKBul+yyD/OT9CDqASnY7uG2n/ajRTkHAYZgcrD8OoJUOcf+7ydJuy6e//UmJec9ofVlu9Bw22/5lhdtv7rKb/YyItYIB7GG9YTmFwvMjJWqyINn5p1ouox9eMtwXkKcbPHAc88KbDb/LSX+ZSXIanTa9htTyNpIZaHe9nuSNktI=
