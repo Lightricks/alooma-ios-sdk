@@ -3,6 +3,7 @@ import json
 import argparse
 import base64
 import sqlite3
+import sys
 
 
 TEST_DB = 'example_app_test_db.db'
@@ -29,6 +30,15 @@ DELETE_EVENTS_BY_TOKEN_QUERY_TPL = 'delete from events where token=\'{token}\''
 app = flask.Flask('alooma-iossdk-test-server')
 
 
+@app.route('/kill', methods=['POST'])
+def kill_app():
+    func = flask.request.environ.get('werkzeug.server.shutdown')
+    if func is None:
+        raise RuntimeError('Not running with the Werkzeug Server')
+    func()
+    return 'Shutting down...\n'
+
+
 @app.route('/track/', methods=['POST'])
 def track_event():
     decoded_data = base64.decodebytes(flask.request.form['data'].encode())
@@ -46,6 +56,7 @@ def track_event():
 
     return "0", 200
 
+
 @app.route('/events/', methods=['GET', 'DELETE'])
 def events():
     if flask.request.method == 'GET':
@@ -60,6 +71,7 @@ def events_by_token(token):
         return get_events(token)
     elif flask.request.method == 'DELETE':
         return delete_events(token)
+
 
 def get_events(token=None):
     cursor = get_db().cursor()
@@ -80,6 +92,7 @@ def get_events(token=None):
         ]
     }
     return flask.jsonify(result)
+
 
 def delete_events(token=None):
     cursor = get_db().cursor()
@@ -105,17 +118,20 @@ def get_db():
         db = flask.g._database = sqlite3.connect(TEST_DB)
     return db
 
+
 @app.teardown_appcontext
 def close_connection(exception):
     db = getattr(flask.g, '_database', None)
     if db is not None:
         db.close()
 
+
 def init_db():
     with app.app_context():
         db = get_db()
         db.cursor().executescript(TEST_DB_SCHEMA)
         db.commit()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('simple iossdk http server')
