@@ -49,6 +49,8 @@ When running in mode 3, Travis CI sets the env var 'TRAVIS', and that's how `exa
 4. Verify your `.travis.yml` with the following command: `travis lint .travis.yml`
 5. Commit any change to the code and browse to https://travis-ci.org/Aloomaio/iossdk/requests to see how TravisCI runs.
 
+**NOTE**: Travis & Sauce can only run 1 test in parallel. if a test fails, make sure there weren't two builds running in parallel, and if there was, retry.
+
 
 ## The test webserver: app.py
 
