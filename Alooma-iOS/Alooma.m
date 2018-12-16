@@ -342,6 +342,7 @@ static __unused NSString *MPURLEncode(NSString *s)
         if (self.sessionId) {
             p[@"session_id"] = self.sessionId;
         }
+        // TODO: add integer overflow check, and generate a new session id on overflow
         self.messageIndex = [NSNumber numberWithInt:[self.messageIndex intValue] + 1];
         p[@"message_index"] = self.messageIndex;
         p[kSendingTimeKey] = kSendingTimePlaceHolder;
@@ -369,7 +370,7 @@ static __unused NSString *MPURLEncode(NSString *s)
             [self archiveEvents];
         }
     });
-    
+
     if ([Alooma isAppExtension]) {
         [self flush];
     }
@@ -573,7 +574,7 @@ static __unused NSString *MPURLEncode(NSString *s)
             properties[kSendingTimeKey] = @(round(epochInterval));
             [event setObject:[NSDictionary dictionaryWithDictionary:properties] forKeyedSubscript:@"properties"];
         }
-        
+
         NSString *requestData = [self encodeAPIData:batch];
         NSString *postBody = [NSString stringWithFormat:@"ip=1&data=%@", requestData];
         AloomaDebug(@"%@ flushing %lu of %lu to %@: %@", self, (unsigned long)[batch count], (unsigned long)[queue count], endpoint, queue);
@@ -849,8 +850,8 @@ static __unused NSString *MPURLEncode(NSString *s)
 {
     // wifi reachability
     BOOL reachabilityOk = NO;
-    NSURL* url = [NSURL URLWithString:self.serverURL]; 
-    NSString* host = [url host]; 
+    NSURL* url = [NSURL URLWithString:self.serverURL];
+    NSString* host = [url host];
     if ((_reachability = SCNetworkReachabilityCreateWithName(NULL, host.UTF8String)) != NULL) {
         SCNetworkReachabilityContext context = {0, (__bridge void*)self, NULL, NULL, NULL};
         if (SCNetworkReachabilitySetCallback(_reachability, AloomaReachabilityCallback, &context)) {
@@ -1013,4 +1014,3 @@ static void AloomaReachabilityCallback(SCNetworkReachabilityRef target, SCNetwor
 }
 
 @end
-
