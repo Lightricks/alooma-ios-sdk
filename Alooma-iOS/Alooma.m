@@ -18,7 +18,7 @@
 #import "AloomaLogger.h"
 #import "NSData+AloomaBase64.h"
 
-#define VERSION @"0.1.1"
+#define VERSION @"0.1.4"
 
 static NSString * const kSendingTimePlaceHolder = @"<SendingTimePlaceHolder>";
 static NSString * const kSendingTimeKey = @"sending_time";
@@ -31,6 +31,8 @@ static NSString * const kSendingTimeKey = @"sending_time";
 
 // re-declare internally as readwrite
 @property (atomic, copy) NSString *distinctId;
+@property (atomic, copy) NSString *sessionId;
+@property (atomic, copy) NSNumber* messageIndex;
 
 @property (nonatomic, copy) NSString *apiToken;
 @property (atomic, strong) NSDictionary *superProperties;
@@ -43,6 +45,8 @@ static NSString * const kSendingTimeKey = @"sending_time";
 @property (nonatomic, strong) CTTelephonyNetworkInfo *telephonyInfo;
 @property (nonatomic, strong) NSDateFormatter *dateFormatter;
 @property (nonatomic, strong) NSMutableDictionary *timedEvents;
+@property (nonatomic, readonly, nullable) UIApplication *application;
+@property (nonatomic) BOOL inBG;
 
 @end
 
@@ -82,6 +86,7 @@ static Alooma *sharedInstance = nil;
         AloomaDebug(@"%@ warning empty api token", self);
     }
     if (self = [self init]) {
+        self.messageIndex = 0;
         self.apiToken = apiToken;
         _flushInterval = flushInterval;
         self.flushOnBackground = YES;
@@ -90,6 +95,7 @@ static Alooma *sharedInstance = nil;
         self.serverURL = url;
 
         self.distinctId = [self defaultDistinctId];
+        self.sessionId = [[NSUUID UUID] UUIDString];
         self.superProperties = [NSMutableDictionary dictionary];
         self.telephonyInfo = [[CTTelephonyNetworkInfo alloc] init];
         self.automaticProperties = [self collectAutomaticProperties];
@@ -104,9 +110,17 @@ static Alooma *sharedInstance = nil;
         self.timedEvents = [NSMutableDictionary dictionary];
 
 
+        if (![Alooma isAppExtension]) {
+            if ([[UIApplication class] respondsToSelector:@selector(sharedApplication)]) {
+                _application = [[UIApplication class] performSelector:@selector(sharedApplication)];
+            }
 #if !defined(ALOOMA_APP_EXTENSION)
-        [self setUpListeners];
+            if(_application) {
+                [self setUpListeners];
+            }
 #endif
+        }
+
         [self unarchive];
 
         if (launchOptions && launchOptions[UIApplicationLaunchOptionsRemoteNotificationKey]) {
@@ -263,7 +277,7 @@ static __unused NSString *MPURLEncode(NSString *s)
     }
     dispatch_async(self.serialQueue, ^{
         self.distinctId = distinctId;
-        if ([Alooma inBackground]) {
+        if ([self inBackground]) {
             [self archiveProperties];
         }
     });
@@ -325,6 +339,12 @@ static __unused NSString *MPURLEncode(NSString *s)
         if (self.distinctId) {
             p[@"distinct_id"] = self.distinctId;
         }
+        if (self.sessionId) {
+            p[@"session_id"] = self.sessionId;
+        }
+        // TODO: add integer overflow check, and generate a new session id on overflow
+        self.messageIndex = [NSNumber numberWithInt:[self.messageIndex intValue] + 1];
+        p[@"message_index"] = self.messageIndex;
         p[kSendingTimeKey] = kSendingTimePlaceHolder;
         [p addEntriesFromDictionary:self.superProperties];
         if (properties) {
@@ -346,13 +366,14 @@ static __unused NSString *MPURLEncode(NSString *s)
         if ([self.eventsQueue count] > 500) {
             [self.eventsQueue removeObjectAtIndex:0];
         }
-        if ([Alooma inBackground]) {
+        if ([self inBackground]) {
             [self archiveEvents];
         }
     });
-#if defined(ALOOMA_APP_EXTENSION)
-    [self flush];
-#endif
+
+    if ([Alooma isAppExtension]) {
+        [self flush];
+    }
 }
 
 
@@ -386,7 +407,7 @@ static __unused NSString *MPURLEncode(NSString *s)
         NSMutableDictionary *tmp = [NSMutableDictionary dictionaryWithDictionary:self.superProperties];
         [tmp addEntriesFromDictionary:properties];
         self.superProperties = [NSDictionary dictionaryWithDictionary:tmp];
-        if ([Alooma inBackground]) {
+        if ([self inBackground]) {
             [self archiveProperties];
         }
     });
@@ -410,7 +431,7 @@ static __unused NSString *MPURLEncode(NSString *s)
             }
         }
         self.superProperties = [NSDictionary dictionaryWithDictionary:tmp];
-        if ([Alooma inBackground]) {
+        if ([self inBackground]) {
             [self archiveProperties];
         }
     });
@@ -424,7 +445,7 @@ static __unused NSString *MPURLEncode(NSString *s)
             [tmp removeObjectForKey:propertyName];
         }
         self.superProperties = [NSDictionary dictionaryWithDictionary:tmp];
-        if ([Alooma inBackground]) {
+        if ([self inBackground]) {
             [self archiveProperties];
         }
     });
@@ -434,7 +455,7 @@ static __unused NSString *MPURLEncode(NSString *s)
 {
     dispatch_async(self.serialQueue, ^{
         self.superProperties = @{};
-        if ([Alooma inBackground]) {
+        if ([self inBackground]) {
             [self archiveProperties];
         }
     });
@@ -553,7 +574,7 @@ static __unused NSString *MPURLEncode(NSString *s)
             properties[kSendingTimeKey] = @(round(epochInterval));
             [event setObject:[NSDictionary dictionaryWithDictionary:properties] forKeyedSubscript:@"properties"];
         }
-        
+
         NSString *requestData = [self encodeAPIData:batch];
         NSString *postBody = [NSString stringWithFormat:@"ip=1&data=%@", requestData];
         AloomaDebug(@"%@ flushing %lu of %lu to %@: %@", self, (unsigned long)[batch count], (unsigned long)[queue count], endpoint, queue);
@@ -802,22 +823,23 @@ static __unused NSString *MPURLEncode(NSString *s)
     return [p copy];
 }
 
-+ (BOOL)inBackground
+- (BOOL)inBackground
 {
-#if !defined(ALOOMA_APP_EXTENSION)
-    return [UIApplication sharedApplication].applicationState == UIApplicationStateBackground;
-#else
+    if (![Alooma isAppExtension]) {
+        return _inBG;
+    }
     return NO;
-#endif
 }
 
 - (void)updateNetworkActivityIndicator:(BOOL)on
 {
-#if !defined(ALOOMA_APP_EXTENSION)
-    if (_showNetworkActivityIndicator) {
-        [UIApplication sharedApplication].networkActivityIndicatorVisible = on;
+    if (![Alooma isAppExtension]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (self.showNetworkActivityIndicator) {
+                self.application.networkActivityIndicatorVisible = on;
+            }
+        });
     }
-#endif
 }
 
 #if !defined(ALOOMA_APP_EXTENSION)
@@ -828,8 +850,8 @@ static __unused NSString *MPURLEncode(NSString *s)
 {
     // wifi reachability
     BOOL reachabilityOk = NO;
-    NSURL* url = [NSURL URLWithString:self.serverURL]; 
-    NSString* host = [url host]; 
+    NSURL* url = [NSURL URLWithString:self.serverURL];
+    NSString* host = [url host];
     if ((_reachability = SCNetworkReachabilityCreateWithName(NULL, host.UTF8String)) != NULL) {
         SCNetworkReachabilityContext context = {0, (__bridge void*)self, NULL, NULL, NULL};
         if (SCNetworkReachabilitySetCallback(_reachability, AloomaReachabilityCallback, &context)) {
@@ -912,6 +934,7 @@ static void AloomaReachabilityCallback(SCNetworkReachabilityRef target, SCNetwor
 
 - (void)applicationDidBecomeActive:(NSNotification *)notification
 {
+    _inBG = false;
     AloomaDebug(@"%@ application did become active", self);
     [self startFlushTimer];
 }
@@ -924,11 +947,11 @@ static void AloomaReachabilityCallback(SCNetworkReachabilityRef target, SCNetwor
 
 - (void)applicationDidEnterBackground:(NSNotification *)notification
 {
+    _inBG = true;
     AloomaDebug(@"%@ did enter background", self);
-
-    self.taskId = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
+    self.taskId = [self.application beginBackgroundTaskWithExpirationHandler:^{
         AloomaDebug(@"%@ flush %lu cut short", self, (unsigned long)self.taskId);
-        [[UIApplication sharedApplication] endBackgroundTask:self.taskId];
+        [self.application endBackgroundTask:self.taskId];
         self.taskId = UIBackgroundTaskInvalid;
     }];
     AloomaDebug(@"%@ starting background cleanup task %lu", self, (unsigned long)self.taskId);
@@ -941,7 +964,7 @@ static void AloomaReachabilityCallback(SCNetworkReachabilityRef target, SCNetwor
         [self archive];
         AloomaDebug(@"%@ ending background cleanup task %lu", self, (unsigned long)self.taskId);
         if (self.taskId != UIBackgroundTaskInvalid) {
-            [[UIApplication sharedApplication] endBackgroundTask:self.taskId];
+            [self.application endBackgroundTask:self.taskId];
             self.taskId = UIBackgroundTaskInvalid;
         }
 //        self.decideResponseCached = NO;
@@ -953,7 +976,7 @@ static void AloomaReachabilityCallback(SCNetworkReachabilityRef target, SCNetwor
     AloomaDebug(@"%@ will enter foreground", self);
     dispatch_async(self.serialQueue, ^{
         if (self.taskId != UIBackgroundTaskInvalid) {
-            [[UIApplication sharedApplication] endBackgroundTask:self.taskId];
+            [self.application endBackgroundTask:self.taskId];
             self.taskId = UIBackgroundTaskInvalid;
             [self updateNetworkActivityIndicator:NO];
         }
@@ -980,18 +1003,14 @@ static void AloomaReachabilityCallback(SCNetworkReachabilityRef target, SCNetwor
     }
 }
 
-#pragma mark - Decide
-
-+ (UIViewController *)topPresentedViewController
-{
-    UIViewController *controller = [UIApplication sharedApplication].keyWindow.rootViewController;
-    while (controller.presentedViewController) {
-        controller = controller.presentedViewController;
-    }
-    return controller;
-}
-
 #endif
 
-@end
++ (BOOL)isAppExtension {
+#if TARGET_OS_IOS
+    return [[NSBundle mainBundle].bundlePath hasSuffix:@".appex"];
+#else
+    return NO;
+#endif
+}
 
+@end
