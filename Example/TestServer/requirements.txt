@@ -1,0 +1,5 @@
+Flask
+argparse
+Appium-Python-Client
+requests
+yaretry

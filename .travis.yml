@@ -1,3 +1,23 @@
 language: objective-c
-script: xctool -workspace Example/SampleApp.xcworkspace -scheme Pods-SampleApp -sdk iphonesimulator ONLY_ACTIVE_ARCH=NO
-install: (gem update cocoapods && cd Example/ ; pod install)
+addons:
+  sauce_connect:
+    username: yuvalbar
+
+install:
+- "(gem update cocoapods && cd Example/ ; pod install)"
+- "(cd Example/TestServer && pip3 install -r requirements.txt)"
+
+before_script:
+- cd Example/TestServer && python3 app.py &
+
+script:
+- xcodebuild -workspace Example/SampleApp.xcworkspace -scheme SampleApp -sdk iphonesimulator
+  ONLY_ACTIVE_ARCH=NO
+- "(cd Example/TestServer && python3 -m unittest example_app_test)"
+
+after_script:
+- curl -X POST http://127.0.0.1:8000/kill
+
+env:
+  global:
+    secure: vtcWgqCC/YSqW1ePWVEBcMj5PMpS0jeFlFTjajVTx27FCsDXV1h+7CjKLstRzo/GO+JKrx2rXW0tACq9z1yMQm3S6pLHDW7y1qq8A9wNWDTbP+U4tP1ZyOj6X1An/wX9NtNx//F+Tn13Flye71YVw9Ti1X74UUwwtvD75QOH962T7U+Fr2Gvco7e90lndSFg/U1+mTDIredRnfKcWZ+sxQU2Yfn4wnVqPEoJy18GxbNOU/98OlxgE96f0qvE3/coSd4gsWnIC3XygKNef4fgd0K31VBzhfWbnGzIDkhBQDzbCb2HcBMR8SEwV7Wl6QHdrWzYyp4LcOI/P3zoTqG/dx9mpAeWd7EWbLlHrSA46TOl6/Egn+iguxv+IgHkEAG0at3qRTRDvR4DwbWIC4UZR1uUtKsgb7wL8MLauwaIQN3SxbJn9ETeKhszl7EKdWEZC7ie8ni0X1UoYt1GADx7bLog4g+XlgXgKw7R6NqMKBiR+WeN4zbhBsuB6H6V7p91OuuVUXo4ARctA5jYO2gf4N9TYsKLvzH6yty6RrNgfFcvYpYN/tUuxeFAqR+GjDCTyBXYVNUjQ2lZGMBQqz+ALCs1dcEwlOX/xORnDmcZPC5AHDuu2hEkCKew/NstfFqacopFvoidJ31dbpzbpyJToUNXWF5GrEG2bkV0nb5/4PU=
