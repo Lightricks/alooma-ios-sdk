@@ -51,7 +51,20 @@ NS_ASSUME_NONNULL_BEGIN
  use the <code>identify:</code> method.
  */
 @property (atomic, readonly, copy) NSString *distinctId;
-
+/*!
+ @property
+ 
+ @abstract
+ Unique ID for every session
+ */
+@property (atomic, readonly, copy) NSString *sessionId;
+/*!
+ @property
+ 
+ @abstract
+ Running counter for tracked messages
+ */
+@property (atomic, readonly, copy) NSNumber* messageIndex;
 /*!
  @property
 
@@ -147,10 +160,8 @@ NS_ASSUME_NONNULL_BEGIN
 
  @param apiToken        your project token
  @param url             your server url
- @param application     current application
  */
-+ (Alooma *)sharedInstanceWithToken:(NSString *)apiToken serverURL:(NSString*)url
-                        application:(nullable UIApplication *)application;
++ (Alooma *)sharedInstanceWithToken:(NSString *)apiToken serverURL:(NSString*)url;
 
 /*!
  @method
@@ -169,9 +180,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param url             your server url
 
  */
-+ (Alooma *)sharedInstanceWithToken:(NSString *)apiToken serverURL:(NSString*)url
-                      launchOptions:(nullable NSDictionary *)launchOptions
-                        application:(nullable UIApplication *)application;
++ (Alooma *)sharedInstanceWithToken:(NSString *)apiToken serverURL:(NSString*)url launchOptions:(nullable NSDictionary *)launchOptions;
 
 /*!
  @method
@@ -201,12 +210,8 @@ NS_ASSUME_NONNULL_BEGIN
  @param launchOptions   optional app delegate launchOptions
  @param flushInterval   interval to run background flushing
  @param url             your server url
- @param application     current application
  */
-- (instancetype)initWithToken:(NSString *)apiToken serverURL:(NSString*)url
-                launchOptions:(nullable NSDictionary *)launchOptions
-             andFlushInterval:(NSUInteger)flushInterval
-                  application:(nullable UIApplication *)application;
+- (instancetype)initWithToken:(NSString *)apiToken serverURL:(NSString*)url launchOptions:(nullable NSDictionary *)launchOptions andFlushInterval:(NSUInteger)flushInterval;
 
 /*!
  @method
@@ -221,11 +226,8 @@ NS_ASSUME_NONNULL_BEGIN
  @param apiToken        your project token
  @param flushInterval   interval to run background flushing
  @param url             your server url
- @param application     current application
  */
-- (instancetype)initWithToken:(NSString *)apiToken serverURL:(NSString*)url
-             andFlushInterval:(NSUInteger)flushInterval
-                  application:(nullable UIApplication *)application;
+- (instancetype)initWithToken:(NSString *)apiToken serverURL:(NSString*)url andFlushInterval:(NSUInteger)flushInterval;
 
 /*!
  @property
@@ -282,15 +284,14 @@ NS_ASSUME_NONNULL_BEGIN
  @method
  
  @abstract
- Arguments will allow you to segment your events in your Mixpanel reports.
+ Tracks a custom NSDictionary object as an event.
  Argument keys must be <code>NSString</code> objects and values must be
  <code>NSString</code>, <code>NSNumber</code>, <code>NSNull</code>,
  <code>NSArray</code>, <code>NSDictionary</code>, <code>NSDate</code> or
  <code>NSURL</code> objects. If the event is being timed, the timer will
  stop and be added as a property.
  
- @param customEvent           arguments dictionary
- 
+ @param customEvent     dictionary to be used as whole event. properties will be injected
  */
 - (void)trackCustomEvent:(NSDictionary *)customEvent;
 
@@ -298,7 +299,7 @@ NS_ASSUME_NONNULL_BEGIN
  @method
 
  @abstract
- Tracks an event with properties.
+ Tracks an event with a custom structure.
 
  @discussion
  Arguments will allow you to segment your events in your Mixpanel reports.
@@ -309,7 +310,7 @@ NS_ASSUME_NONNULL_BEGIN
  stop and be added as a property.
 
  @param event           event name
- @param customEvent      properties dictionary
+ @param customEvent     dictionary to be used as whole event. properties will be injected
  */
 - (void)track:(NSString *)event customEvent:(NSDictionary *)customEvent;
 
@@ -400,8 +401,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param properties      properties dictionary
  @param defaultValue    overwrite existing properties that have this value
  */
-- (void)registerSuperPropertiesOnce:(NSDictionary *)properties
-                       defaultValue:(nullable id)defaultValue;
+- (void)registerSuperPropertiesOnce:(NSDictionary *)properties defaultValue:(nullable id)defaultValue;
 
 /*!
  @method
